@@ -1,0 +1,17 @@
+left handed
+1. stance front
+2. stance back
+3. intercept front
+4. intercept back
+
+right handed
+1. stance back
+2. stance front
+3. intercept back
+4. intercept front
+
+Which stats to use:
+
+1. pa obp, singles,doubles,triples, hrs
+2. xwoba, woba, babip, launch_angle, launch_speed, hardhit_percent, k_percent
+3. bat_speed, swing_length, attack_angle, attack_direction, swing_path_tilt
