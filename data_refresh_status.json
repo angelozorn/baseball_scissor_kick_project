@@ -1,0 +1,11 @@
+{
+  "season": 2025,
+  "started_at_utc": "2026-03-20T03:26:41.071869+00:00",
+  "completed_at_utc": "2026-03-20T03:26:42.707151+00:00",
+  "source": "existing:savant_data.csv",
+  "savant_rows": 617,
+  "final_rows": 210,
+  "final_scissor_count": 55,
+  "final_non_scissor_count": 155,
+  "savant_sha256": "884d10b8c09663b753ff7f2d30f6465364119fe94b7f20f87ad6069332fa4c64"
+}

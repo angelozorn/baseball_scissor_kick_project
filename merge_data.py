@@ -6,10 +6,12 @@ savant_df = pd.read_csv("savant_data.csv")
 
 # Select and combine scissor flags
 stance_subset = stance_df[["name", "scissor_kick", "scissor_kick_l", "scissor_kick_r"]].copy()
+for col in ["scissor_kick", "scissor_kick_l", "scissor_kick_r"]:
+    stance_subset[col] = stance_subset[col].eq(True)
 stance_subset["scissor_kick_combined"] = (
-    stance_subset["scissor_kick"].fillna(False) |
-    stance_subset["scissor_kick_l"].fillna(False) |
-    stance_subset["scissor_kick_r"].fillna(False)
+    stance_subset["scissor_kick"] |
+    stance_subset["scissor_kick_l"] |
+    stance_subset["scissor_kick_r"]
 )
 stance_subset = stance_subset[["name", "scissor_kick_combined"]]
 
@@ -29,10 +31,11 @@ selected_columns = [
     "hardhit_percent", "obp", "k_percent", "bb_percent",
     "singles", "doubles", "triples", "hrs",
     "bat_speed", "swing_length", "pa",
-    "whiffs", "swings", "launch_angle", "launch_speed", "whiffs","swings", "bip"
+    "whiffs", "swings", "launch_angle", "launch_speed", "bip"
 ]
 
 final_df = merged_df[selected_columns]
+final_df = final_df.drop_duplicates(subset=["name"], keep="first")
 
 # Save to CSV
 final_df.to_csv("scissor_analysis_stats.csv", index=False)
