@@ -21,16 +21,12 @@ BASE_DIR = Path(__file__).resolve().parent
 REFRESH_STATUS_PATH = BASE_DIR / "data_refresh_status.json"
 
 SCISSOR_DEFINITION = """
-**Scissor kick (coach view):** the hitter starts to "split" the feet during the swing.
-The **back foot drifts away from the plate** while the **front foot stays closer to the plate** at contact.
-
-In this app, that movement puts the hitter in the **Scissor kick** group.
-For switch hitters, we check both sides; if either side shows it, they count as scissor.
+The scissor kick is when a batter moves his back foot away from the plate during the swing.
+This move typically ends up with the front foot closer to the plate than the back foot during contact.
 """
 
 NON_SCISSOR_DEFINITION = """
-**Non-scissor (coach view):** the hitter does not show that same foot split at contact.
-This is the baseline group to compare against scissor-kick hitters.
+The hitter does not move the back foot away from the plate during the swing. This is the baseline group to compare against scissor-kick hitters.
 """
 
 COORD_COLS = [f"{a}{i}" for i in range(1, 9) for a in ("x", "y")]
@@ -40,78 +36,199 @@ def apply_custom_styles() -> None:
     st.markdown(
         """
         <style>
+            :root {
+                --bg-top: #ffffff;
+                --bg-mid: #f8fafc;
+                --bg-bottom: #f3f6fb;
+                --text-main: #122033;
+                --text-muted: #44556b;
+                --accent-red: #cc2b3e;
+                --accent-blue: #2468d6;
+                --panel: rgba(255, 255, 255, 0.92);
+                --panel-strong: rgba(255, 255, 255, 0.98);
+                --border: rgba(33, 90, 189, 0.2);
+                --shadow: 0 10px 30px rgba(16, 33, 56, 0.08);
+            }
+
             .stApp {
-                background: linear-gradient(180deg, #081625 0%, #0f253a 45%, #132b43 100%);
-                color: #e7eef7;
+                background:
+                    radial-gradient(1200px 420px at 8% -8%, rgba(204, 43, 62, 0.1), transparent 60%),
+                    radial-gradient(950px 450px at 92% 0%, rgba(36, 104, 214, 0.11), transparent 60%),
+                    linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 48%, var(--bg-bottom) 100%);
+                color: var(--text-main);
+                font-family: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             }
 
             .main .block-container {
-                padding-top: 1.3rem;
-                padding-bottom: 2rem;
+                padding-top: 1rem;
+                padding-bottom: 2.4rem;
+                max-width: 1220px;
             }
 
             h1, h2, h3 {
-                color: #f5f9ff !important;
-                letter-spacing: 0.2px;
+                color: #13263f !important;
+                letter-spacing: 0.15px;
+                line-height: 1.2;
+                text-wrap: balance;
+            }
+
+            h1 {
+                font-weight: 800;
+                font-size: clamp(1.8rem, 2.6vw, 2.45rem);
+                margin-bottom: 0.2rem;
+            }
+
+            h2, h3 {
+                font-weight: 700;
+            }
+
+            hr {
+                border: none;
+                height: 1px;
+                background: linear-gradient(
+                    90deg,
+                    transparent,
+                    rgba(36, 104, 214, 0.26),
+                    rgba(204, 43, 62, 0.3),
+                    transparent
+                );
+                margin: 1.2rem 0 1.1rem;
             }
 
             div[data-testid="stMetric"] {
-                background: linear-gradient(145deg, rgba(17, 37, 58, 0.95), rgba(15, 31, 49, 0.95));
-                border: 1px solid rgba(95, 168, 255, 0.28);
+                background: linear-gradient(165deg, rgba(255, 255, 255, 0.96), rgba(247, 251, 255, 0.98));
+                border: 1px solid rgba(36, 104, 214, 0.18);
                 border-radius: 14px;
-                padding: 0.65rem 0.75rem;
-                box-shadow: 0 8px 24px rgba(5, 12, 20, 0.25);
+                padding: 0.72rem 0.8rem;
+                box-shadow: 0 8px 20px rgba(16, 33, 56, 0.07);
+                transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+            }
+
+            div[data-testid="stMetric"]:hover {
+                transform: translateY(-2px);
+                border-color: rgba(204, 43, 62, 0.38);
+                box-shadow: 0 12px 24px rgba(16, 33, 56, 0.12);
             }
 
             div[data-testid="stMetricLabel"] p {
-                color: #c6d6ea !important;
+                color: #5a6e85 !important;
                 font-weight: 600;
             }
 
             div[data-testid="stMetricValue"] {
-                color: #ffffff !important;
+                color: #12263f !important;
                 font-weight: 700;
             }
 
-            div[data-testid="stTabs"] button {
-                background: rgba(22, 43, 65, 0.65);
-                border: 1px solid rgba(88, 150, 226, 0.35);
-                border-radius: 10px;
-                margin-right: 0.3rem;
-                color: #dce9f7;
-            }
-
-            div[data-testid="stTabs"] button[aria-selected="true"] {
-                background: linear-gradient(90deg, rgba(35, 79, 120, 0.95), rgba(28, 112, 148, 0.95));
-                border-color: rgba(110, 191, 255, 0.6);
-                color: #ffffff;
-            }
-
             div[data-testid="stAlert"] {
-                background: rgba(32, 76, 114, 0.5);
-                border: 1px solid rgba(108, 196, 255, 0.45);
-                border-radius: 10px;
+                background: linear-gradient(140deg, rgba(36, 104, 214, 0.08), rgba(204, 43, 62, 0.08));
+                border: 1px solid rgba(36, 104, 214, 0.26);
+                border-radius: 12px;
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
             }
 
             div[data-testid="stExpander"] {
-                background: rgba(11, 27, 42, 0.55);
-                border: 1px solid rgba(89, 154, 229, 0.32);
+                background: linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(248, 251, 255, 0.98));
+                border: 1px solid rgba(36, 104, 214, 0.24);
                 border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 8px 20px rgba(16, 33, 56, 0.08);
             }
 
             div[data-testid="stVerticalBlockBorderWrapper"] {
-                background: rgba(9, 23, 36, 0.62);
+                background: linear-gradient(165deg, var(--panel), var(--panel-strong));
                 border-radius: 14px;
+                border: 1px solid rgba(36, 104, 214, 0.18);
+                box-shadow: var(--shadow);
             }
 
             div[data-testid="stDataFrame"] {
-                border: 1px solid rgba(94, 160, 236, 0.24);
+                border: 1px solid rgba(36, 104, 214, 0.2);
                 border-radius: 12px;
                 overflow: hidden;
+                box-shadow: 0 10px 22px rgba(16, 33, 56, 0.08);
             }
 
-            div[data-testid="stMarkdownContainer"] p {
-                color: #d4e2f2;
+            div[data-testid="stDataFrame"] [role="grid"] {
+                background: #ffffff !important;
+            }
+
+            div[data-testid="stDataFrame"] [role="columnheader"] {
+                background: linear-gradient(180deg, rgba(36, 104, 214, 0.96), rgba(24, 83, 182, 0.96)) !important;
+                color: #ffffff !important;
+                font-weight: 700 !important;
+                border-bottom: 1px solid rgba(25, 73, 158, 0.4) !important;
+            }
+
+            div[data-testid="stDataFrame"] [role="gridcell"] {
+                color: #1d2f46 !important;
+                border-top: 1px solid rgba(36, 104, 214, 0.12) !important;
+                background: #ffffff !important;
+            }
+
+            div[data-testid="stDataFrame"] [role="row"]:nth-child(even) [role="gridcell"] {
+                background: rgba(36, 104, 214, 0.04) !important;
+            }
+
+            div[data-testid="stButton"] button {
+                background: linear-gradient(135deg, #2468d6 0%, #cc2b3e 100%);
+                color: #ffffff;
+                border: 1px solid rgba(36, 104, 214, 0.35);
+                border-radius: 12px;
+                font-weight: 700;
+                letter-spacing: 0.15px;
+                box-shadow: 0 10px 20px rgba(16, 33, 56, 0.14);
+                transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+            }
+
+            div[data-testid="stButton"] button:hover {
+                transform: translateY(-1px);
+                filter: brightness(1.06);
+                box-shadow: 0 14px 24px rgba(16, 33, 56, 0.22);
+            }
+
+            div[data-testid="stButton"] button:focus {
+                outline: none;
+                box-shadow: 0 0 0 0.2rem rgba(36, 104, 214, 0.22), 0 10px 20px rgba(16, 33, 56, 0.14);
+            }
+
+            div[data-testid="stButton"] button p,
+            div[data-testid="stButton"] button span {
+                color: #ffffff !important;
+            }
+
+            div[role="radiogroup"] > label {
+                background: linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(246, 250, 255, 0.98));
+                border: 1px solid rgba(36, 104, 214, 0.2);
+                border-radius: 10px;
+                margin-bottom: 0.32rem;
+                padding: 0.4rem 0.55rem;
+                transition: border-color 0.15s ease, background 0.15s ease;
+            }
+
+            div[role="radiogroup"] > label:hover {
+                border-color: rgba(204, 43, 62, 0.38);
+                background: linear-gradient(160deg, rgba(255, 247, 248, 0.98), rgba(248, 251, 255, 0.98));
+            }
+
+            div[data-testid="stExpander"] summary,
+            div[data-testid="stExpander"] summary p,
+            div[data-testid="stExpander"] summary span {
+                color: #ffffff !important;
+            }
+
+            div[data-testid="stMarkdownContainer"] p,
+            div[data-testid="stCaptionContainer"],
+            .stCaption {
+                color: var(--text-muted) !important;
+            }
+
+            div[data-testid="stMarkdownContainer"] strong {
+                color: #12263f;
+            }
+
+            div[data-testid="stToolbar"] {
+                opacity: 0.85;
             }
         </style>
         """,
@@ -419,11 +536,7 @@ def player_stats_tables(row: pd.Series) -> None:
 def main() -> None:
     st.set_page_config(page_title="Scissor kick explorer", layout="wide")
     apply_custom_styles()
-    st.title("Scissor kick vs non-scissor")
-    st.caption(
-        "Aggregated Statcast-style metrics (means across players), definitions, and per-player stance + stats. "
-        "Duplicate `name` rows in `scissor_analysis_stats.csv` keep the **first** row as ordered in the file."
-    )
+    st.title("Scissor kick vs Non-scissor")
     render_refresh_status()
 
     try:
@@ -437,130 +550,126 @@ def main() -> None:
     summary_s = group_summary(scissor_df)
     summary_n = group_summary(non_df)
 
-    tab_cmp, tab_drill = st.tabs(["Compare groups", "Explore a group"])
+    st.markdown("#### Group definitions")
+    st.markdown("**Scissor kick**")
+    st.markdown(SCISSOR_DEFINITION)
+    st.markdown("**Non-scissor**")
+    st.markdown(NON_SCISSOR_DEFINITION)
+    st.markdown("### Scissor Kick vs Non-Scissor stats comparison")
+    st.caption("Means are **across players** in each group (not PA-weighted).")
 
-    with tab_cmp:
-        st.markdown("### Side-by-side aggregates")
-        st.caption("Means are **across players** in each group (not PA-weighted).")
-        c1, c2 = st.columns(2)
-        with c1:
-            st.subheader("Scissor kick")
-            mcols = st.columns(3)
-            for i, (label, key) in enumerate(AGG_DISPLAY[:6]):
-                with mcols[i % 3]:
-                    raw = summary_s.get(key)
-                    st.metric(label, format_metric_value(key, raw) if raw is not None else "—")
-            mcols2 = st.columns(3)
-            for j, (label, key) in enumerate(AGG_DISPLAY[6:]):
-                with mcols2[j % 3]:
-                    raw = summary_s.get(key)
-                    st.metric(label, format_metric_value(key, raw) if raw is not None else "—")
-        with c2:
-            st.subheader("Non-scissor")
-            mcols = st.columns(3)
-            for i, (label, key) in enumerate(AGG_DISPLAY[:6]):
-                with mcols[i % 3]:
-                    raw = summary_n.get(key)
-                    st.metric(label, format_metric_value(key, raw) if raw is not None else "—")
-            mcols2 = st.columns(3)
-            for j, (label, key) in enumerate(AGG_DISPLAY[6:]):
-                with mcols2[j % 3]:
-                    raw = summary_n.get(key)
-                    st.metric(label, format_metric_value(key, raw) if raw is not None else "—")
+    rows: list[dict[str, str]] = []
+    for label, key in AGG_DISPLAY:
+        s_raw = summary_s.get(key)
+        n_raw = summary_n.get(key)
 
-        with st.expander("Group definitions (read me)", expanded=False):
-            st.markdown("#### Scissor kick")
-            st.markdown(SCISSOR_DEFINITION)
-            st.markdown("#### Non-scissor")
-            st.markdown(NON_SCISSOR_DEFINITION)
+        rows.append(
+            {
+                "Scissor kick": format_metric_value(key, s_raw),
+                "Metric": label,
+                "Non-scissor": format_metric_value(key, n_raw),
+            }
+        )
 
-    with tab_drill:
-        st.markdown("### Pick a group, then a player")
+    # Keep the dataframe styling while sizing it tall enough to show all rows.
+    row_height_px = 35
+    header_height_px = 38
+    table_height_px = header_height_px + row_height_px * len(rows)
+    st.dataframe(
+        pd.DataFrame(rows),
+        hide_index=True,
+        use_container_width=True,
+        height=table_height_px,
+    )
 
-        if "active_group_scissor" not in st.session_state:
+    st.divider()
+    st.markdown("### Explore a group")
+    st.markdown("Pick a group, then a player")
+
+    if "active_group_scissor" not in st.session_state:
+        st.session_state.active_group_scissor = True
+
+    g1, g2 = st.columns(2)
+    with g1:
+        if st.button(
+            "Scissor kick group",
+            use_container_width=True,
+            type="primary" if st.session_state.active_group_scissor else "secondary",
+        ):
             st.session_state.active_group_scissor = True
+            st.rerun()
+    with g2:
+        if st.button(
+            "Non-scissor group",
+            use_container_width=True,
+            type="primary" if not st.session_state.active_group_scissor else "secondary",
+        ):
+            st.session_state.active_group_scissor = False
+            st.rerun()
 
-        g1, g2 = st.columns(2)
-        with g1:
-            if st.button(
-                "Scissor kick group",
-                use_container_width=True,
-                type="primary" if st.session_state.active_group_scissor else "secondary",
-            ):
-                st.session_state.active_group_scissor = True
-                st.rerun()
-        with g2:
-            if st.button(
-                "Non-scissor group",
-                use_container_width=True,
-                type="primary" if not st.session_state.active_group_scissor else "secondary",
-            ):
-                st.session_state.active_group_scissor = False
-                st.rerun()
+    active = st.session_state.active_group_scissor
+    gdf = scissor_df if active else non_df
+    summ = summary_s if active else summary_n
 
-        active = st.session_state.active_group_scissor
-        gdf = scissor_df if active else non_df
-        summ = summary_s if active else summary_n
+    st.info(group_label(active))
 
-        st.info(group_label(active))
+    with st.expander("What does this group mean?", expanded=True):
+        st.markdown(SCISSOR_DEFINITION if active else NON_SCISSOR_DEFINITION)
 
-        with st.expander("What does this group mean?", expanded=True):
-            st.markdown(SCISSOR_DEFINITION if active else NON_SCISSOR_DEFINITION)
+    st.markdown("#### Group aggregates")
+    mc = st.columns(4)
+    for i, (label, key) in enumerate(AGG_DISPLAY):
+        with mc[i % 4]:
+            raw = summ.get(key)
+            st.metric(label, format_metric_value(key, raw) if raw is not None else "—")
 
-        st.markdown("#### Group aggregates")
-        mc = st.columns(4)
-        for i, (label, key) in enumerate(AGG_DISPLAY):
-            with mc[i % 4]:
-                raw = summ.get(key)
-                st.metric(label, format_metric_value(key, raw) if raw is not None else "—")
+    st.markdown("#### Player view")
+    names = sorted(gdf["name"].astype(str).tolist())
+    if not names:
+        st.warning("No players found in this group.")
+        return
 
-        st.markdown("#### Player view")
-        names = sorted(gdf["name"].astype(str).tolist())
-        if not names:
-            st.warning("No players found in this group.")
-            return
+    panel_height_px = 780
+    left_col, right_col = st.columns([1, 2])
+    with left_col:
+        st.markdown("**Players in this group**")
+        with st.container(height=panel_height_px, border=True):
+            pick = st.radio(
+                "Click a player name",
+                names,
+                index=0,
+                key=f"player_drill_{'scissor' if active else 'non_scissor'}",
+                label_visibility="collapsed",
+            )
 
-        panel_height_px = 780
-        left_col, right_col = st.columns([1, 2])
-        with left_col:
-            st.markdown("**Players in this group**")
-            with st.container(height=panel_height_px, border=True):
-                pick = st.radio(
-                    "Click a player name",
-                    names,
-                    index=0,
-                    key=f"player_drill_{'scissor' if active else 'non_scissor'}",
-                    label_visibility="collapsed",
+    row = gdf[gdf["name"] == pick].iloc[0]
+    with right_col:
+        with st.container(height=panel_height_px, border=True):
+            st.markdown(f"### {pick}")
+            st.caption(
+                f"UID: {row.get('uid', '—')} · Group: **{group_label(bool(row['scissor_kick_combined']))}**"
+            )
+
+            pc1, pc2 = st.columns([1, 1])
+            with pc1:
+                st.markdown(
+                    "**Virtual batter’s box** (stance red tones, intercept darker; switch: L vs R coloring)"
                 )
-
-        row = gdf[gdf["name"] == pick].iloc[0]
-        with right_col:
-            with st.container(height=panel_height_px, border=True):
-                st.markdown(f"### {pick}")
-                st.caption(
-                    f"UID: {row.get('uid', '—')} · Group: **{group_label(bool(row['scissor_kick_combined']))}**"
-                )
-
-                pc1, pc2 = st.columns([1, 1])
-                with pc1:
-                    st.markdown(
-                        "**Virtual batter’s box** (stance red tones, intercept darker; switch: L vs R coloring)"
+                switch_side = None
+                is_switch_hitter = bool(pd.notna(row.get("x5")) and pd.notna(row.get("y5")))
+                if is_switch_hitter:
+                    switch_side = st.radio(
+                        "Switch-hitter side",
+                        options=["L", "R"],
+                        horizontal=True,
+                        key=f"switch_side_{pick}_{'scissor' if active else 'non_scissor'}",
                     )
-                    switch_side = None
-                    is_switch_hitter = bool(pd.notna(row.get("x5")) and pd.notna(row.get("y5")))
-                    if is_switch_hitter:
-                        switch_side = st.radio(
-                            "Switch-hitter side",
-                            options=["L", "R"],
-                            horizontal=True,
-                            key=f"switch_side_{pick}_{'scissor' if active else 'non_scissor'}",
-                        )
-                    fig = batter_box_figure(row, switch_side=switch_side)
-                    st.pyplot(fig)
-                    plt.close(fig)
-                with pc2:
-                    st.markdown("**Player statistics**")
-                    player_stats_tables(row)
+                fig = batter_box_figure(row, switch_side=switch_side)
+                st.pyplot(fig)
+                plt.close(fig)
+            with pc2:
+                st.markdown("**Player statistics**")
+                player_stats_tables(row)
 
 
 if __name__ == "__main__":
