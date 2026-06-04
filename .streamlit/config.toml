@@ -1,0 +1,5 @@
+[server]
+baseUrlPath = "baseball_scissor_kick_project"
+
+[browser]
+gatherUsageStats = false
