@@ -511,21 +511,20 @@ def player_stats_tables(row: pd.Series) -> None:
             return f"{float(v):.1f}%"
         return f"{float(v):.3f}"
 
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.markdown("**Results / usage**")
+    tab_results, tab_batted, tab_swing = st.tabs(
+        ["Results / usage", "Batted-ball / plate discipline", "Swing metrics"]
+    )
+    with tab_results:
         st.table(
             pd.DataFrame(
                 {"Value": [fmt_cell(k, basic[k]) for k in basic]}, index=list(basic.keys())
             )
         )
-    with c2:
-        st.markdown("**Batted-ball / plate discipline**")
+    with tab_batted:
         st.table(
             pd.DataFrame({"Value": [fmt_cell(k, adv[k]) for k in adv]}, index=list(adv.keys()))
         )
-    with c3:
-        st.markdown("**Swing metrics**")
+    with tab_swing:
         st.table(
             pd.DataFrame(
                 {"Value": [fmt_cell(k, swing[k]) for k in swing]}, index=list(swing.keys())
