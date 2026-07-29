@@ -21,7 +21,7 @@ import sys
 from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 import pandas as pd
 
@@ -82,7 +82,8 @@ def validate_savant_csv(path: Path) -> pd.DataFrame:
 
 
 def read_csv_from_url(url: str) -> pd.DataFrame:
-    with urlopen(url) as resp:
+    req = Request(url, headers={"User-Agent": "scissor-project-weekly-refresh/1.0"})
+    with urlopen(req) as resp:
         content = resp.read()
     return pd.read_csv(BytesIO(content))
 
@@ -117,6 +118,20 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Override 2026 season-start guard (not recommended for production).",
     )
+    parser.add_argument(
+        "--trust-source-season",
+        action="store_true",
+        help=(
+            "Accept a datasource with no season/year/game_date column, trusting that "
+            "the source query is already filtered to the requested season."
+        ),
+    )
+    parser.add_argument(
+        "--min-rows",
+        type=int,
+        default=1,
+        help="Fail if the savant CSV has fewer than this many rows (guards against empty exports).",
+    )
     return parser.parse_args()
 
 
@@ -133,7 +148,12 @@ def count_rows_for_season(df: pd.DataFrame, season: int) -> int | None:
     return None
 
 
-def enforce_season_gate(df: pd.DataFrame, season: int, allow_preseason: bool) -> None:
+def enforce_season_gate(
+    df: pd.DataFrame,
+    season: int,
+    allow_preseason: bool,
+    source_pins_season: bool,
+) -> None:
     if season != 2026:
         return
 
@@ -146,9 +166,14 @@ def enforce_season_gate(df: pd.DataFrame, season: int, allow_preseason: bool) ->
 
     rows_2026 = count_rows_for_season(df, 2026)
     if rows_2026 is None:
+        # Aggregated Savant exports have no per-row season column; accept them
+        # when the query itself is pinned to the season (hfSea= in the URL).
+        if source_pins_season:
+            return
         raise RuntimeError(
             "2026 refresh blocked: datasource has no `season`, `year`, or `game_date` column, "
-            "so 2026 rows cannot be verified."
+            "so 2026 rows cannot be verified. If the source query is already filtered to "
+            "2026 (e.g. hfSea=2026 in the Savant URL), pass --trust-source-season."
         )
     if rows_2026 == 0:
         raise RuntimeError(
@@ -185,7 +210,16 @@ def main() -> None:
         savant_df = validate_savant_csv(SAVANT_PATH)
         source_desc = "existing:savant_data.csv"
 
-    enforce_season_gate(savant_df, args.season, args.allow_preseason)
+    if len(savant_df) < args.min_rows:
+        raise RuntimeError(
+            f"Refresh blocked: savant CSV has only {len(savant_df)} rows "
+            f"(minimum required: {args.min_rows}). The source query may be empty or broken."
+        )
+
+    source_pins_season = args.trust_source_season or bool(
+        args.source_url and f"hfSea={args.season}" in args.source_url
+    )
+    enforce_season_gate(savant_df, args.season, args.allow_preseason, source_pins_season)
     savant_df.to_csv(SAVANT_PATH, index=False)
     run_step("data_transform.py")
     run_step("determine_scissor.py")

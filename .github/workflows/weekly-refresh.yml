@@ -1,0 +1,88 @@
+name: Weekly Data Refresh
+
+on:
+  schedule:
+    # Mondays 11:00 UTC (~6-7am ET), March through November (in-season only)
+    - cron: "0 11 * 3-11 1"
+  workflow_dispatch:
+    inputs:
+      source_url:
+        description: "Override Savant CSV URL (defaults to the SAVANT_CSV_URL repo variable)"
+        required: false
+      season:
+        description: "Override season year (defaults to current year)"
+        required: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  refresh-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install pandas stlitepack
+
+      - name: Refresh data from Baseball Savant
+        env:
+          SAVANT_CSV_URL: ${{ inputs.source_url || vars.SAVANT_CSV_URL }}
+          SEASON_OVERRIDE: ${{ inputs.season }}
+        run: |
+          if [ -z "$SAVANT_CSV_URL" ]; then
+            echo "::error::SAVANT_CSV_URL is not set. Add it as a repository variable:"
+            echo "::error::Settings -> Secrets and variables -> Actions -> Variables -> New repository variable"
+            echo "::error::Value = the Baseball Savant statcast search CSV export URL for your scissor query."
+            exit 1
+          fi
+          SEASON="${SEASON_OVERRIDE:-$(date -u +%Y)}"
+          # Keep the query pinned to the current season even if the stored URL has an old year
+          URL="$(printf '%s' "$SAVANT_CSV_URL" | sed -E "s/hfSea=[0-9]{4}/hfSea=${SEASON}/g")"
+          echo "Refreshing season ${SEASON}"
+          python weekly_refresh.py --season "$SEASON" --source-url "$URL" --min-rows 100
+
+      - name: Commit refreshed data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add savant_data.csv scissor_analysis_stats.csv stance_data_with_scissor.csv \
+                  stance_data_deduplicated.csv data_refresh_status.json \
+                  basic_stats.csv advanced_stats.csv swing_metrics.csv || true
+          git add -u
+          if git diff --cached --quiet; then
+            echo "No data changes to commit."
+          else
+            git commit -m "Automated weekly data refresh ($(date -u +%F))"
+            git push origin main
+          fi
+
+      # A push made with GITHUB_TOKEN does not trigger the deploy workflow,
+      # so build and publish Pages directly from the refreshed working tree.
+      - name: Build static app
+        run: python deploy_pages.py
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
