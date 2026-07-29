@@ -60,9 +60,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add savant_data.csv scissor_analysis_stats.csv stance_data_with_scissor.csv \
-                  stance_data_deduplicated.csv data_refresh_status.json \
-                  basic_stats.csv advanced_stats.csv swing_metrics.csv || true
+          git add savant_data.csv stance_data.csv scissor_analysis_stats.csv \
+                  stance_data_with_scissor.csv stance_data_deduplicated.csv \
+                  data_refresh_status.json basic_stats.csv advanced_stats.csv \
+                  swing_metrics.csv || true
           git add -u
           if git diff --cached --quiet; then
             echo "No data changes to commit."

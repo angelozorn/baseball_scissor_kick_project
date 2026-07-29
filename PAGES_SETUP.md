@@ -74,9 +74,14 @@ the source URL or season for a one-off run.
   `hfSea=<season>` satisfies the season check for aggregated exports that lack a
   season column.
 
-### Known limitation
+### Stance data refresh
 
-`stance_data.csv` (batting-stance coordinates) is scraped manually with
-`extract_stance.py` and is **not** refreshed by this workflow. Players who debut
-after the last stance scrape will be missing stance labels and drop out of the
-merged analysis until the scrape is rerun.
+The weekly workflow also refreshes `stance_data.csv` via `fetch_stance.py`, which
+downloads the batting-stance dataset embedded in Savant's
+[batting-stance visual](https://baseballsavant.mlb.com/visuals/batting-stance)
+and replicates the visual's rendering math to produce the same foot-position
+columns the old Selenium scraper (`extract_stance.py`) captured. No browser is
+needed, and newly debuted players are picked up automatically each week.
+
+Pass `--skip-stance-refresh` to `weekly_refresh.py` to keep the existing
+`stance_data.csv` instead.

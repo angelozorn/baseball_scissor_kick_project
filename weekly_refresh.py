@@ -88,8 +88,8 @@ def read_csv_from_url(url: str) -> pd.DataFrame:
     return pd.read_csv(BytesIO(content))
 
 
-def run_step(script_name: str) -> None:
-    cmd = [sys.executable, str(BASE_DIR / script_name)]
+def run_step(script_name: str, *extra_args: str) -> None:
+    cmd = [sys.executable, str(BASE_DIR / script_name), *extra_args]
     result = subprocess.run(cmd, cwd=BASE_DIR, check=False)
     if result.returncode != 0:
         raise RuntimeError(f"{script_name} failed with exit code {result.returncode}")
@@ -131,6 +131,11 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=1,
         help="Fail if the savant CSV has fewer than this many rows (guards against empty exports).",
+    )
+    parser.add_argument(
+        "--skip-stance-refresh",
+        action="store_true",
+        help="Keep the existing stance_data.csv instead of fetching fresh stance data from Savant.",
     )
     return parser.parse_args()
 
@@ -221,6 +226,8 @@ def main() -> None:
     )
     enforce_season_gate(savant_df, args.season, args.allow_preseason, source_pins_season)
     savant_df.to_csv(SAVANT_PATH, index=False)
+    if not args.skip_stance_refresh:
+        run_step("fetch_stance.py", "--season", str(args.season))
     run_step("data_transform.py")
     run_step("determine_scissor.py")
     run_step("merge_data.py")
@@ -229,11 +236,18 @@ def main() -> None:
     final_df = pd.read_csv(BASE_DIR / "scissor_analysis_stats.csv")
     completed_at = datetime.now(timezone.utc)
 
+    stance_df = pd.read_csv(BASE_DIR / "stance_data.csv")
     status = {
         "season": args.season,
         "started_at_utc": started_at.isoformat(),
         "completed_at_utc": completed_at.isoformat(),
         "source": source_desc,
+        "stance_source": (
+            "existing:stance_data.csv"
+            if args.skip_stance_refresh
+            else f"savant-batting-stance-visual:{args.season}"
+        ),
+        "stance_rows": int(len(stance_df)),
         "savant_rows": int(len(savant_df)),
         "final_rows": int(len(final_df)),
         "final_scissor_count": int(final_df["scissor_kick_combined"].fillna(False).sum()),
