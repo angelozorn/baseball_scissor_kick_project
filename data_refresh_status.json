@@ -1,7 +1,7 @@
 {
   "season": 2026,
-  "started_at_utc": "2026-10-26T17:01:55.683450+00:00",
-  "completed_at_utc": "2026-10-26T17:01:59.547135+00:00",
+  "started_at_utc": "2026-11-02T20:32:08.838724+00:00",
+  "completed_at_utc": "2026-11-02T20:32:12.887989+00:00",
   "source": "url:https://baseballsavant.mlb.com/statcast_search/csv?hfGT=R%7C&hfPR=foul%7Cfoul%5C.%5C.bunt%7Cbunt%5C.%5C.foul%5C.%5C.tip%7Cfoul%5C.%5C.pitchout%7Chit%5C.%5C.into%5C.%5C.play%7Cmissed%5C.%5C.bunt%7Cfoul%5C.%5C.tip%7Cswinging%5C.%5C.pitchout%7Cswinging%5C.%5C.strike%7Cswinging%5C.%5C.strike%5C.%5C.blocked%7C&hfSea=2026%7C&player_type=batter&group_by=name&min_pitches=0&min_results=0&min_pas=0&sort_col=pitches&sort_order=desc&all=true",
   "stance_source": "savant-batting-stance-visual:2026",
   "stance_rows": 231,
@@ -9,5 +9,5 @@
   "final_rows": 209,
   "final_scissor_count": 71,
   "final_non_scissor_count": 138,
-  "savant_sha256": "cf9ea2595d79a17dc9e5783063e3c6cf05018f5536693cffe778167af4c4f1f2"
+  "savant_sha256": "b992a3f6484e03e900bec0248e8f6222874b1569b850113f4c2663d9317b02e7"
 }
